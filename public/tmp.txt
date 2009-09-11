@@ -1,0 +1,1 @@
+This is need to maintain this public directory - that's required for passenger
