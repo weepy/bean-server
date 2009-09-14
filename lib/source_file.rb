@@ -2,14 +2,25 @@ require 'find'
 
 class SourceFile
   
-  attr_reader :filename, :path
+  attr_reader :filename, :full_path, :lines
   
-  def initialize f
-    @filename = f
+  def initialize filename
+    @filename = filename
+    
+    if filename.match(/\.js$/)
+      @relative = true
+      @full_path = LoadPath + @filename
+      @path = @filename
+    else
+      @filename += ".js"
+      unless find_file
+        raise "Could not find #{filename} in load path" 
+      end
+    end
   end
   
   def lines
-    File.open(full_path) { |f| f.readlines }
+     File.open(full_path) { |f| f.readlines }
   end
   
   def dependencies
@@ -17,31 +28,42 @@ class SourceFile
     lines.each do |line|
       line.strip!
       next if line.length == 0
-      m  = line.match /^\/\/= require <(.+)>/
-      ret.push(m[1]) if m
       break if line.strip.match /^\/\/[^=]/
+
+      m  = line.match /^\/\/= require "(.+)"$/
+      if m
+        ret.push(folder + m[1] + ".js")
+        next
+      end
+      
+      m  = line.match /^\/\/= require <(.+)>$/
+      ret.push(m[1]) if m
+      
     end
     ret
   end
 
-  def full_path
-    find_file unless @full_path
-    raise "Could not find #{@filename} in load paths" unless @full_path
-    @full_path
+  def folder
+    path.split("/").slice(0..-2).join("/") +"/"
+  end
+  
+  def path
+    @path 
   end
   
   def find_file
-    LoadPaths.each do |lp|
-      Find.find(lp) do |p|
-        puts p
-        if p.match(/\/#{@filename}$/)
-          @load_path = lp 
-          @path = p.gsub(lp, "")
-          @full_path = p
-          return true
-        end
+       
+    Find.find(LoadPath) do |p|
+
+      if p.match(/\/#{@filename}$/)        
+        @full_path = p
+        @path = @full_path.gsub(LoadPath, "")
+        return true
       end
     end
+
+    
     false
   end
+  
 end

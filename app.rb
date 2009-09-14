@@ -5,44 +5,50 @@ require 'lib/source_file'
 require 'settings'
 require 'fileutils'
 
-get "/=*" do
-  url = request.fullpath.gsub(/^\/=/,"").split("?")
-  filenames = url[0]
-  options = url[1]
+
+get %r{/=(.+\.js)[?]?(.*)} do
   
-  list = filenames.split(",").map {|s| s.strip}
+  filenames = params[:captures][0]
+  options = parse_params(request.fullpath.gsub(/^\/=/,"").split("?")[1])
+  list = filenames.split(",").map {|s| s.strip.gsub(/\.js$/,"") }
 
   ex = Expander.new(list)
-
   ex.expand_list
-  content_type "text/js"
-  #ex.paths.join(", ")
+  
+  content_type(request.media_type || "text/plain")
+
+  return ex.concatenated if  options[:concatenate] == "true"
+      
   if ex.paths.length == 1
     send_file ex.full_paths[0]
-  else   
+  else
+    this_host =  request.url.split("/").slice(0,3).join("/")
     ex.paths.map do |file| 
-      "document.write('<script src=\"#{ServerUrl}/#{file}\"></script>');\n"
+      "document.write('<script type=\"text/javascript\" src=\"#{this_host}#{file}\"></script>');\n"
     end.join("")
   end
-
+  
 end
 
+# handle anything else..
+get "/=*" do
+  "NOT YET"
+end
 
 get "/*" do
   name = request.fullpath.gsub("^/","")
-  path = find_load_path(name)
-  #content_type request.media_type
-  return "Could not find #{name} in load paths" unless path
-  send_file "#{path}/#{name}"
+  content_type (request.media_type || "text/plain")
+  send_file "#{LoadPath}/#{name}"
 end
 
-
-
-def find_load_path f
-  LoadPaths.each do |load_path|
-    return load_path if File.exists? "#{load_path}/#{f}"
+def parse_params u
+  ret = {}
+  (u || "").split("&").each do |x|
+    t = x.split("=")
+    ret[t[0].to_sym]=t[1]
   end
-  false
+  ret
 end
+
 
 

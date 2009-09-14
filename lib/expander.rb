@@ -8,8 +8,8 @@ class Expander
     @list.each { |l| load_file(l) }
   end
   
-  def load_file(file)
-    @files[file] ||= SourceFile.new(file)
+  def load_file(filename)
+    @files[filename] ||= SourceFile.new(filename)
   end
   
   def expand_list
@@ -37,5 +37,9 @@ class Expander
   
   def paths
     list.map {|f| @files[f].path}
+  end
+  
+  def concatenated
+    list.map {|f| @files[f].lines.join}.join
   end
 end
