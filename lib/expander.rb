@@ -40,6 +40,6 @@ class Expander
   end
   
   def concatenated
-    list.map {|f| @files[f].lines.join}.join
+    list.map {|f| @files[f].lines.join}.join(";\n")
   end
 end

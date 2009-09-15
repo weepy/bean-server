@@ -53,10 +53,11 @@ class SourceFile
   
   def find_file
        
-    Find.find(LoadPath) do |p|
-
-      if p.match(/\/#{@filename}$/)        
-        @full_path = p
+    Find.find(LoadPath) do |path| 
+      
+      if path.match(/\/#{@filename}$/) && !File.directory?(path)  
+        
+        @full_path = path
         @path = @full_path.gsub(LoadPath, "")
         return true
       end

@@ -5,12 +5,26 @@ require 'lib/source_file'
 require 'settings'
 require 'fileutils'
 
+# get "/?*" do |c|
+#   a = request.fullpath
+#   file = a.slice(2, a.length)
+#   
+#   files = []
+#   
+#   Find.find(LoadPath) do |p|
+#     files.push(p) if p.match(file)        
+#   end
+#   
+#   html = "<h1>Files matching '#{file}'</h1>"
+#   html += files.map { |f| "<p><a href='#{f}'>#{f}</a></p>"}.join
+# end
+# 
 
-get %r{/=(.+\.js)[?]?(.*)} do
+get %r{/=(.+)[?]?(.*)} do
   
   filenames = params[:captures][0]
   options = parse_params(request.fullpath.gsub(/^\/=/,"").split("?")[1])
-  list = filenames.split(",").map {|s| s.strip.gsub(/\.js$/,"") }
+  list = filenames.split(",").map {|s| s.strip }
 
   ex = Expander.new(list)
   ex.expand_list
@@ -22,7 +36,7 @@ get %r{/=(.+\.js)[?]?(.*)} do
   if ex.paths.length == 1
     send_file ex.full_paths[0]
   else
-    this_host =  request.url.split("/").slice(0,3).join("/")
+    this_host = request.url.split("/").slice(0,3).join("/")
     ex.paths.map do |file| 
       "document.write('<script type=\"text/javascript\" src=\"#{this_host}#{file}\"></script>');\n"
     end.join("")
@@ -31,12 +45,38 @@ get %r{/=(.+\.js)[?]?(.*)} do
 end
 
 # handle anything else..
-get "/=*" do
-  "NOT YET"
+get "/*" do
+ 
+  filename = request.fullpath.slice(1,request.fullpath.length-1)
+
+  ret = []
+  Find.find(LoadPath) do |path|
+    if path.match(/#{filename}/) && !File.directory?(path)  
+      ret << path
+    end
+  end
+  
+  if ret.length == 0
+    "couldn't find #{filename}"
+  elsif ret.length == 1
+    send_file ret[0]
+  else
+    this_host = request.url.split("/").slice(0,3).join("/")
+    
+    ret = ret.map do |r| 
+      q = r.gsub(LoadPath,"")
+      "<p><a href='#{this_host}#{q}'>#{q}</a></p>"
+    end
+    
+    "<h1>Found #{ret.length} files matching '#{filename}'</h1>" + ret.join("")
+  end
+    
 end
 
 get "/*" do
+  return "not impl"
   name = request.fullpath.gsub("^/","")
+  
   content_type (request.media_type || "text/plain")
   send_file "#{LoadPath}/#{name}"
 end
