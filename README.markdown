@@ -16,7 +16,7 @@ Setup
 
 To run:
 
-<pre>rupy app.rb</pre>
+<pre>ruby app.rb</pre>
 
 Or add to passenger pane (config.ru supplied)
 
@@ -29,13 +29,13 @@ Use
 
 From any local html page, or local server, you can call
 
-<pre><script src='http://bean-server/=jquery,jquery.plugin,myvector,other_stuff'></script></pre>
+<pre>&lt;script src='http://bean-server/=jquery,jquery.plugin,myvector,other_stuff'&gt;&lt;/script&gt;</pre>
 
 The bean-server will then attempt to find these files in the repo and include them. It will also resolve internal dependencies.
 
 Without the initial =, it will simply try and return the file in the path specified
 
-<pre><script src='http://bean-server/jquery/jquery.js'></script></pre>
+<pre>&lt;script src='http://bean-server/jquery/jquery.js'&gt;&lt;/script&gt;</pre>
 
 
 Script Dependencies
