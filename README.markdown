@@ -43,10 +43,10 @@ Script Dependencies
 
 Script's can require other scripts using the following terminology (same syntax as Sprockets)
 
-<code>
+<pre>
 //= require <file>
 //= require "../lib/my_relative_file"
-</code>
+</pre>
 
 These directives must be placed at the very top of the script. 
 
