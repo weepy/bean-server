@@ -58,3 +58,12 @@ If there is more than one script to return as an include there are two options:
 Default action is to returns a list of scripts in document.write form (a pod of scripts :-)
 
 If the option "?concatenate=true" is passed in the search params, server will concatenate the scripts together
+
+Differences to Gems
+----
+
+Currently there's no way of versioning the 'beans', short of nameing the files themselves. I.e. <code>jquery.1.3.3.js</code>.
+
+There's also the problem of accidently including another file named myfile.js that occurs in another 'bean'
+
+There features/bugs could be fixed/implemented, but I'm wary of adding complexity at this early stage.
