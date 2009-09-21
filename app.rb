@@ -24,7 +24,11 @@ get %r{/=(.+)[?]?(.*)} do
   
   filenames = params[:captures][0]
   options = parse_params(request.fullpath.gsub(/^\/=/,"").split("?")[1])
-  list = filenames.split(",").map {|s| s.strip }
+  list = filenames.split(",").map do |s| 
+            s=s.strip
+            s+= ".js" unless s.match(/\./) 
+            s
+          end
 
   ex = Expander.new(list)
   ex.expand_list

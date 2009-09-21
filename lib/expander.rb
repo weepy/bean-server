@@ -5,11 +5,12 @@ class Expander
   def initialize file_list
     @list = file_list.uniq
     @files = {}
-    @list.each { |l| load_file(l) }
+    @list.each { |l| load_file(l, false) }
   end
   
-  def load_file(filename)
-    @files[filename] ||= SourceFile.new(filename)
+  def load_file(filename, relative)
+    s = SourceFile.new(filename, relative)
+    @files[s.key] = s
   end
   
   def expand_list
@@ -24,7 +25,13 @@ class Expander
     new_list = []
     @list.each do |file|
       deps = @files[file].dependencies
-      deps.each { |d| load_file(d) }
+      deps.each do |d| 
+        if d.match(/-RELATIVE$/)
+          load_file(d.gsub(/-RELATIVE$/, ""), true)
+        else
+          load_file(d, false)
+        end
+      end
       new_list += deps
       new_list << file
     end

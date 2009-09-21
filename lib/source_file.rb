@@ -4,19 +4,22 @@ class SourceFile
   
   attr_reader :filename, :full_path, :lines
   
-  def initialize filename
+  def initialize filename, relative
     @filename = filename
-    
-    if filename.match(/\.js$/)
-      @relative = true
+    @relative = relative
+           
+    if relative
       @full_path = LoadPath + @filename
       @path = @filename
     else
-      @filename += ".js" unless @filename.match(/\./)
-      unless find_file
+      unless find_file(filename)
         raise "Could not find #{filename} in load path" 
-      end
+      end     
     end
+  end
+  
+  def key
+    filename + (@relative ? "-RELATIVE" : "") 
   end
   
   def lines
@@ -32,12 +35,12 @@ class SourceFile
 
       m  = line.match /^\/\/= require "(.+)"$/
       if m
-        ret.push(folder + m[1] + ".js")
+        ret.push(folder + m[1] + ".js" + "-RELATIVE")
         next
       end
       
       m  = line.match /^\/\/= require <(.+)>$/
-      ret.push(m[1]) if m
+      ret.push( m[1] + ".js" ) if m
       
     end
     ret
@@ -51,11 +54,11 @@ class SourceFile
     @path 
   end
   
-  def find_file
-       
+  def find_file f
+    
     Find.find(LoadPath) do |path| 
       
-      if path.match(/\/#{@filename}$/) && !File.directory?(path)  
+      if path.match(/\/#{f}$/) && !File.directory?(path)  
         
         @full_path = path
         @path = @full_path.gsub(LoadPath, "")
