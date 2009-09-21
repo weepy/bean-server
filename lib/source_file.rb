@@ -12,7 +12,7 @@ class SourceFile
       @full_path = LoadPath + @filename
       @path = @filename
     else
-      @filename += ".js"
+      @filename += ".js" unless @filename.match(/\./)
       unless find_file
         raise "Could not find #{filename} in load path" 
       end

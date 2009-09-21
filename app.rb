@@ -51,7 +51,7 @@ get "/*" do
 
   ret = []
   Find.find(LoadPath) do |path|
-    if path.match(/#{filename}/) && !File.directory?(path)  
+    if path.match(/#{filename}/) && !File.directory?(path) && !path.match(/\/\./)
       ret << path
     end
   end
