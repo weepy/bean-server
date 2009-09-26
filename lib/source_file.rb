@@ -4,7 +4,7 @@ class SourceFile
   
   attr_reader :filename, :full_path, :lines
   
-  def initialize filename, relative
+  def initialize filename, relative, all_paths
     @filename = filename
     @relative = relative
            
@@ -12,9 +12,12 @@ class SourceFile
       @full_path = LoadPath + @filename
       @path = @filename
     else
-      unless find_file(filename)
+      s = Time.now.to_f
+      unless find_file(filename, all_paths)
         raise "Could not find #{filename} in load path" 
-      end     
+      end
+      
+      puts "Find for #{filename} took #{Time.now.to_f - s}s"
     end
   end
   
@@ -54,9 +57,9 @@ class SourceFile
     @path 
   end
   
-  def find_file f
+  def find_file f, all_paths
     
-    Find.find(LoadPath) do |path| 
+    all_paths.each do |path| 
       
       if path.match(/\/#{f}$/) && !File.directory?(path)  
         

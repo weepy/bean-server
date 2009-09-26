@@ -2,6 +2,7 @@ require 'rubygems'
 require 'sinatra'
 require 'lib/expander'
 require 'lib/source_file'
+require 'lib/filetree'
 require 'settings'
 require 'fileutils'
 
@@ -21,6 +22,7 @@ require 'fileutils'
 # 
 
 get %r{/=(.+)[?]?(.*)} do
+  start_time = Time.now.to_f
   
   filenames = params[:captures][0]
   options = parse_params(request.fullpath.gsub(/^\/=/,"").split("?")[1])
@@ -32,18 +34,26 @@ get %r{/=(.+)[?]?(.*)} do
 
   ex = Expander.new(list)
   ex.expand_list
-  
-  content_type(request.media_type || "text/plain")
 
-  return ex.concatenated if  options[:concatenate] == "true"
-      
+   
+  content_type(request.media_type || "text/plain")
+  if  options[:concatenate] == "true"
+    ret = ex.concatenated
+    return "// rendered by Beans in #{Time.now.to_f - start_time}s\n" + ret
+  end
+  
+  
   if ex.paths.length == 1
     send_file ex.full_paths[0]
   else
     this_host = request.url.split("/").slice(0,3).join("/")
-    ex.paths.map do |file| 
+    ret = ex.paths.map do |file| 
       "document.write('<script type=\"text/javascript\" src=\"#{this_host}#{file}\"></script>');\n"
     end.join("")
+   
+  
+   
+    "// rendered by Beans in #{Time.now.to_f - start_time}s\n" + ret
   end
   
 end
@@ -54,7 +64,7 @@ get "/*" do
   filename = request.fullpath.slice(1,request.fullpath.length-1)
 
   ret = []
-  Find.find(LoadPath) do |path|
+  Dir["#{LoadPath}/**/*"].each do |path|
     if path.match(/#{filename}/) && !File.directory?(path) && !path.match(/\/\./)
       ret << path
     end
