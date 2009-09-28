@@ -12,12 +12,9 @@ class SourceFile
       @full_path = LoadPath + @filename
       @path = @filename
     else
-      s = Time.now.to_f
       unless find_file(filename, all_paths)
         raise "Could not find #{filename} in load path" 
       end
-      
-      puts "Find for #{filename} took #{Time.now.to_f - s}s"
     end
   end
   
