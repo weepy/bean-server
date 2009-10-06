@@ -2,84 +2,117 @@ require 'rubygems'
 require 'sinatra'
 require 'lib/expander'
 require 'lib/source_file'
+require 'lib/file_finder'
 require 'settings'
 require 'fileutils'
 
-# get "/?*" do |c|
-#   a = request.fullpath
-#   file = a.slice(2, a.length)
-#   
-#   files = []
-#   
-#   Find.find(LoadPath) do |p|
-#     files.push(p) if p.match(file)        
-#   end
-#   
-#   html = "<h1>Files matching '#{file}'</h1>"
-#   html += files.map { |f| "<p><a href='#{f}'>#{f}</a></p>"}.join
-# end
-# 
+LoadPaths = Settings[:load_paths].map! {|p| File.expand_path(p)}.select {|p| File.directory? p }
+
 
 get %r{/=(.+)[?]?(.*)} do
+  start_time = Time.now.to_f
   
   filenames = params[:captures][0]
   options = parse_params(request.fullpath.gsub(/^\/=/,"").split("?")[1])
-  list = filenames.split(",").map {|s| s.strip }
+
+  list = filenames.split(",").map do |s| 
+            s=s.strip 
+            s+= ".js" unless s.match(/\./)  # should probably remove this
+            s
+          end
 
   ex = Expander.new(list)
   ex.expand_list
-  
+   
   content_type(request.media_type || "text/plain")
 
-  return ex.concatenated if  options[:concatenate] == "true"
-      
-  if ex.paths.length == 1
-    send_file ex.full_paths[0]
+  if  options[:concat] == "true"
+    return "// rendered by Beans in #{Time.now.to_f - start_time}s\n#{ex.concatenated}" 
+  end
+
+  if ex.file_list.length == 1
+    send_file ex.filesystem_paths[0]
   else
+    
     this_host = request.url.split("/").slice(0,3).join("/")
-    ex.paths.map do |file| 
+    scripts = ex.paths.map do |file| 
       "document.write('<script type=\"text/javascript\" src=\"#{this_host}#{file}\"></script>');\n"
     end.join("")
+
+    "// rendered by Beans in #{Time.now.to_f - start_time}s\n#{scripts}"
   end
   
 end
 
-# handle anything else..
+# search
 get "/*" do
- 
+
   filename = request.fullpath.slice(1,request.fullpath.length-1)
+  
+  if filename[0] && filename[0] != "?"[0]
+    return handle_serve_file filename
+  end
+  
+  filename.gsub!("?","")
 
-  ret = []
-  Find.find(LoadPath) do |path|
-    if path.match(/#{filename}/) && !File.directory?(path)  
-      ret << path
+  
+  found = []
+  LoadPaths.each do |load_path|
+    Dir["#{load_path}/**/*"].each do |path|
+      if !File.directory?(path) && path.match(filename) && !path.match(/\/\./)
+        found << { :path =>path, :load_path => load_path }
+      end
+    end
+  end
+
+  # if found.length == 1
+  #   send_file found[0][:path]
+  #   return
+  # end
+  
+  file_links = found.map do |r| 
+    q = r[:path].gsub(r[:load_path],"")
+    "<a href='#{q}'>#{q}</a>"
+  end
+
+  erb :file_list, :locals => {:file_links => file_links, :filename => filename == "" ? "*" : filename}
+end
+
+
+
+
+def handle_serve_file filename
+  
+  LoadPaths.each do |load_path|
+    path = "#{load_path}/#{filename}"
+
+    if File.exists? path  
+      send_file(path)
+      return
     end
   end
   
-  if ret.length == 0
-    "couldn't find #{filename}"
-  elsif ret.length == 1
-    send_file ret[0]
-  else
-    this_host = request.url.split("/").slice(0,3).join("/")
-    
-    ret = ret.map do |r| 
-      q = r.gsub(LoadPath,"")
-      "<p><a href='#{this_host}#{q}'>#{q}</a></p>"
-    end
-    
-    "<h1>Found #{ret.length} files matching '#{filename}'</h1>" + ret.join("")
-  end
-    
+  "// could not find #{filename}"
 end
 
-get "/*" do
-  return "not impl"
-  name = request.fullpath.gsub("^/","")
-  
-  content_type (request.media_type || "text/plain")
-  send_file "#{LoadPath}/#{name}"
-end
+
+
+
+# get "/*" do
+#   return "not impl"
+#   path = request.fullpath.gsub("^/","")
+#   
+#   LoadPaths.each do |load_path|
+#     full_path = "#{load_path}/#{path}"
+#     if File.exists? full_path
+#       send_file full_path
+#       content_type (request.media_type || "text/plain")
+#       return
+#     end
+#   end
+#   
+#   "// could not find file '#{path}' in load paths"
+# end
 
 def parse_params u
   ret = {}
@@ -89,6 +122,3 @@ def parse_params u
   end
   ret
 end
-
-
-
