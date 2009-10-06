@@ -5,13 +5,11 @@ class Expander
   def initialize file_list
     @list = file_list.uniq
     @files = {}
-    @file_finder = FileFinder.new
-    @list.each { |l| load_file(l) } 
+    @list.each { |l| load_file(l) }
   end
   
-  def load_file(filename, relative = false)
-    s = SourceFile.new(filename, relative, @file_finder)
-    @files[s.full_path] = s
+  def load_file(filename)
+    @files[filename] ||= SourceFile.new(filename)
   end
   
   def expand_list
@@ -24,17 +22,11 @@ class Expander
   
   def expand_list_once
     new_list = []
-    
     @list.each do |file|
       deps = @files[file].dependencies
-      
-      deps.each do |d| 
-        load_file(d[0], d[1])
-      end
-  
+      deps.each { |d| load_file(d) }
       new_list += deps
-      new_list << [file]
-      
+      new_list << file
     end
     new_list.uniq
   end
@@ -50,6 +42,4 @@ class Expander
   def concatenated
     list.map {|f| @files[f].lines.join}.join(";\n")
   end
-  
 end
-

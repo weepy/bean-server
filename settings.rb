@@ -1,1 +1,1 @@
-Settings = { :load_paths => ["~/beans", "./test-beans/"] }
+LoadPath = "/Users/jonahfox/Beans"
