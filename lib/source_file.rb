@@ -2,24 +2,26 @@ require 'find'
 
 class SourceFile
   
-  attr_reader :filename, :full_path, :lines
+  attr_reader :filename, :full_path, :lines, :path
   
-  def initialize filename, relative, all_paths
+  def initialize filename, relative, file_finder
     @filename = filename
     @relative = relative
-           
-    if relative
-      @full_path = LoadPath + @filename
+    @file_finder = file_finder
+    
+    if @relative
+      @full_path = folder(relative) + @filename
       @path = @filename
     else
-      unless find_file(filename, all_paths)
-        raise "Could not find #{filename} in load path" 
-      end
+      file = file_finder.find_file(filename)
+      raise "Could not find #{filename} in load path" if !file
+      @path = file[0]
+      @full_path = file[1] + @path 
     end
   end
   
   def key
-    filename + (@relative ? "-RELATIVE" : "") 
+    @full_path #[@filename, @relative_path] 
   end
   
   def lines
@@ -35,39 +37,19 @@ class SourceFile
 
       m  = line.match /^\/\/= require "(.+)"$/
       if m
-        ret.push(folder + m[1] + ".js" + "-RELATIVE")
+        ret.push([folder(path) + m[1] + ".js", @full_path])
         next
       end
       
       m  = line.match /^\/\/= require <(.+)>$/
-      ret.push( m[1] + ".js" ) if m
+      ret.push( [m[1] + ".js"] ) if m
       
     end
     ret
   end
 
-  def folder
-    path.split("/").slice(0..-2).join("/") +"/"
-  end
-  
-  def path
-    @path 
-  end
-  
-  def find_file f, all_paths
-    
-    all_paths.each do |path| 
-      
-      if path.match(/\/#{f}$/) && !File.directory?(path)  
-        
-        @full_path = path
-        @path = @full_path.gsub(LoadPath, "")
-        return true
-      end
-    end
-
-    
-    false
+  def folder(p)
+    p.split("/").slice(0..-2).join("/") +"/"
   end
   
 end

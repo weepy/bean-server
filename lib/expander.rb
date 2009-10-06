@@ -5,62 +5,38 @@ class Expander
   def initialize file_list
     @list = file_list.uniq
     @files = {}
-    xx = Time.now.to_f
-    @i = 0 
-    @all_paths = Dir["#{LoadPath}/**/*"]
-    puts "Dir #{Time.now.to_f - xx}" 
-    
-    @list.each { |l| load_file(l, false) }
-
-    
-    
+    @file_finder = FileFinder.new
+    @list.each { |l| load_file(l) } 
   end
   
-  def load_file(filename, relative)
-      xx = Time.now.to_f
-    s = SourceFile.new(filename, relative, @all_paths)
-    @i +=Time.now.to_f - xx
-    @files[s.key] = s
+  def load_file(filename, relative = false)
+    s = SourceFile.new(filename, relative, @file_finder)
+    @files[s.full_path] = s
   end
   
   def expand_list
-   
-   xx = Time.now.to_f
     while true
       newlist = expand_list_once
       break if newlist == @list
       @list = newlist
     end
-    puts "XXx#{@i}"
-    puts "   #{Time.now.to_f - xx}"
   end
   
   def expand_list_once
     new_list = []
-
     
     @list.each do |file|
-          
-      
-      deps = @files[file].dependencies()
-     
+      deps = @files[file].dependencies
       
       deps.each do |d| 
-        if d.match(/-RELATIVE$/)
-          load_file(d.gsub(/-RELATIVE$/, ""), true)
-        else
-          load_file(d, false)
-        end
+        load_file(d[0], d[1])
       end
   
       new_list += deps
-      new_list << file
+      new_list << [file]
       
     end
-    
-  
     new_list.uniq
-    
   end
   
   def full_paths
@@ -74,4 +50,6 @@ class Expander
   def concatenated
     list.map {|f| @files[f].lines.join}.join(";\n")
   end
+  
 end
+
