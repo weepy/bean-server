@@ -2,9 +2,21 @@ class Expander
   
   attr_reader :file_list
   
-  def initialize list 
+  def initialize list, extra_paths
+    
+    @extra_paths = extra_paths
+    
+    # if extra_paths
+    #       list = (extra_paths + list).flatten
+    #     end
+    
     @files = {}
-    @file_finder = FileFinder.new
+    @file_finder = FileFinder.new extra_paths
+    
+    #raise @file_finder.all_paths.inspect
+    
+    
+    
     @file_list = list.uniq.map { |l| load_file(l) }.map {|x| [x]}
     
   end
@@ -14,7 +26,7 @@ class Expander
    
     filesystem_path = relative ? File.expand_path("#{relative}/#{filename}") : @file_finder.find(filename)
     
-    raise "Could not find #{filename} in load path" if !filesystem_path
+    raise "Could not find #{filename} in load path (relative=#{relative})" if !filesystem_path
     add_source_file(filesystem_path)
     filesystem_path
   end

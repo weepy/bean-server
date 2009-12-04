@@ -37,6 +37,8 @@ Without the initial =, it will simply try and return the file in the path specif
 
 <pre>&lt;script src='http://bean-server/jquery/jquery.js'&gt;&lt;/script&gt;</pre>
 
+If the option "add_path=x" is passed in the search params, server will add the full path to the search paths
+
 
 Script Dependencies
 ----

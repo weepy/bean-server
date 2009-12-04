@@ -6,6 +6,8 @@ require 'lib/file_finder'
 require 'settings'
 require 'fileutils'
 
+
+
 LoadPaths = Settings[:load_paths].map! {|p| File.expand_path(p)}.select {|p| File.directory? p }
 
 
@@ -21,12 +23,12 @@ get %r{/=(.+)[?]?(.*)} do
             s
           end
 
-  ex = Expander.new(list)
+  ex = Expander.new(list, (options[:paths] || "").split(","))
   ex.expand_list
    
   content_type(request.media_type || "text/plain")
 
-  if  options[:concat] == "true"
+  if options[:concat] == "true"
     return "// rendered by Beans in #{Time.now.to_f - start_time}s\n#{ex.concatenated}" 
   end
 
