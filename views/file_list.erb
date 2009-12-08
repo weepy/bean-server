@@ -1,18 +1,25 @@
 <html>
-<head>
-<style>
-body { font-family: arial,sans; background: #111; color: #ddd }
-a { color: #ddf; text-decoration: none; }
-a:hover {text-decoration: underline;}
-h1,h2,h3 { color: #f44 }
-h1 {position: fixed;right: 0;top:0; margin: 20px;}
-</style>
-</head>
+  <head>
+    <style>
+      body { font-family: arial,sans; background: #111; color: #ddd }
+      a { color: #ddf; text-decoration: none; }
+      a:hover {text-decoration: underline;}
+      h1,h2,h3 { color: #f44; }
+      input {font-size: 16px; background: black; border: 2px solid #f44; color: white; padding: 4px;}
+      h1 {position: fixed;right: 0;top:0; margin: 20px;}
+    </style>
+  </head>
 <body> 
-<h1>Beans</h1>
-<h2>Found <i><%= file_links.length %></i> files matching <i><%= filename %></i></h2>
-<% file_links.each do |a| %>
-  <p><%= a %></p>
-<% end %>
+  <h1>Beans</h1>
+  <h2>
+      Found <i><%= file_links.length %></i> files matching 
+      <input id=inp value='<%= filename %>' onkeydown='if(event.keyCode==13) { document.location="/?" + this.value }'></input>  
+  </h2>
+
+  <% file_links.each do |a| %>
+    <p><%= a %></p>
+  <% end %>
+
+  <script>document.getElementById("inp").focus()</script>
 
 </body>
