@@ -1,1 +1,1 @@
-Settings = { :load_paths => ["~/beans/dev", "./test-beans/", "~/beans/src"] }
+Settings = { :load_paths => ["./test-beans/"] }
