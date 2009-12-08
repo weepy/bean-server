@@ -1,3 +1,3 @@
-//= require <beanz.js>
-//= require <a.js>
+//= require <beanz>
+//= require <meanz>
 

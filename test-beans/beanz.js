@@ -1,1 +1,1 @@
-console.log("meanz")
+var message = "beans"

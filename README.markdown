@@ -1,6 +1,11 @@
 Bean-Server
 ===
 
+See http://blog.parkerfox.co.uk/2009/12/08/beans-rubygems-for-javascript/
+
+For more detailed explanation
+
+
 About
 ---
 
@@ -18,11 +23,13 @@ To run:
 
 <pre>ruby app.rb</pre>
 
+point browser at http://localhost:4567/test-beanz.html
+
 Or add to passenger pane (config.ru supplied)
 
 settings.rb provides 1 setting
 
-LoadPath => the paths to load the Beans from
+:load_paths => the paths to load the Beans from
 
 Use
 ----

@@ -1,0 +1,2 @@
+//= require "heinz"
+message += " heinz"
