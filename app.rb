@@ -6,8 +6,6 @@ require 'lib/file_finder'
 require 'settings'
 require 'fileutils'
 
-
-
 LoadPaths = Settings[:load_paths].map! {|p| File.expand_path(p)}.select {|p| File.directory? p }
 
 
@@ -23,7 +21,9 @@ get %r{/=(.+)[?]?(.*)} do
             s
           end
 
-  ex = Expander.new(list, (options[:paths] || "").split(","))
+  extra_paths = (options[:paths] || "").split(",")
+  
+  ex = Expander.new(list, extra_paths)
   ex.expand_list
    
   content_type(request.media_type || "text/plain")
@@ -37,8 +37,17 @@ get %r{/=(.+)[?]?(.*)} do
   else
     
     this_host = request.url.split("/").slice(0,3).join("/")
-    scripts = ex.paths.map do |file| 
-      "document.write('<script type=\"text/javascript\" src=\"#{this_host}#{file}\"></script>');\n"
+    scripts = ex.paths.map do |file|
+      url = "#{this_host}#{file}"
+      
+      extra_paths.each do |p|
+        if file.match p 
+          file = file.gsub p, ""
+          url = "#{this_host}#{file}?paths=" + p
+        end
+      end
+      
+      "document.write('<script type=\"text/javascript\" src=\"#{url}\"></script>');\n"
     end.join("")
 
     "// rendered by Beans in #{Time.now.to_f - start_time}s\n#{scripts}"
@@ -57,7 +66,7 @@ get "/*" do
   
   filename.gsub!("?","")
 
-  
+  filename.gsub!("*","")
   found = []
   LoadPaths.each do |load_path|
     Dir["#{load_path}/**/*"].each do |path|
@@ -83,11 +92,21 @@ end
 
 
 
-def handle_serve_file filename
+def handle_serve_file url
   
-  LoadPaths.each do |load_path|
+  filename = url.split("?")[0]
+  options = parse_params(url.split("?")[1])
+  
+  paths = LoadPaths
+  if options[:paths]
+    paths = options[:paths].split(",") + paths
+  end
+  
+  
+  
+  paths.each do |load_path|
     path = "#{load_path}/#{filename}"
-
+    #raise path
     if File.exists? path  
       send_file(path)
       return
