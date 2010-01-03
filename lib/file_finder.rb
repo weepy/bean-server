@@ -1,14 +1,8 @@
 class FileFinder  
   attr_accessor :all_paths
   
-  def initialize paths
-    load_paths = LoadPaths
-    if paths
-      load_paths = (paths + load_paths)#.flatten
-    end
-    
-    @all_paths = load_paths.map { |path| Dir["#{path}/**/*"] }
-    
+  def initialize paths = []
+    @all_paths = (paths + LoadPaths).map { |path| Dir["#{path}/**/*"] }    
   end
   
   def find f
@@ -21,6 +15,11 @@ class FileFinder
       end
     end
     false
+  end
+  
+  def find_relative path, relative
+    file = File.expand_path("#{relative}/#{path}")
+    File.exists?(file) ? file : nil
   end
   
 end

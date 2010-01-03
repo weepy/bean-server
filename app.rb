@@ -5,6 +5,7 @@ require 'lib/source_file'
 require 'lib/file_finder'
 require 'settings'
 require 'fileutils'
+require "g"
 
 LoadPaths = Settings[:load_paths].map! {|p| File.expand_path(p)}.select {|p| File.directory? p }
 
@@ -17,7 +18,7 @@ get %r{/=(.+)[?]?(.*)} do
 
   list = filenames.split(",").map do |s| 
             s=s.strip 
-            s+= ".js" unless s.match(/\./)  # should probably remove this
+            # s+= ".js" unless s.match(/\./)  # should probably remove this
             s
           end
 
@@ -108,8 +109,13 @@ def handle_serve_file url
     path = "#{load_path}/#{filename}"
     #raise path
     if File.exists? path  
-      send_file(path)
-      return
+      source = File.read(path)
+      if path.match(/\.coffee$/)
+        require "coffee-script"
+        return CoffeeScript.compile source
+      else
+        return source
+      end
     end
   end
   

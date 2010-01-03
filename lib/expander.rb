@@ -3,8 +3,8 @@ class Expander
   attr_reader :file_list
   
   def initialize list, extra_paths
-    
-    @extra_paths = extra_paths
+    # 
+    # @extra_paths = extra_paths
     
     # if extra_paths
     #       list = (extra_paths + list).flatten
@@ -14,19 +14,24 @@ class Expander
     @file_finder = FileFinder.new extra_paths
     
     #raise @file_finder.all_paths.inspect
-    
-    
-    
+
     @file_list = list.uniq.map { |l| load_file(l) }.map {|x| [x]}
     
   end
   
 
+
   def load_file(filename, relative = false)
-   
-    filesystem_path = relative ? File.expand_path("#{relative}/#{filename}") : @file_finder.find(filename)
+    filesystem_path = false
     
-    raise "Could not find #{filename} in load path (relative=#{relative})" if !filesystem_path
+    [".js",".coffee",""].each do |ext|
+      f = "#{filename}#{ext}"
+
+      filesystem_path = relative ? @file_finder.find_relative(f,relative) : @file_finder.find(f)
+      break if filesystem_path
+    end
+    
+    raise "Could not find #{filename} in load path (relative=#{!!relative})" if !filesystem_path
     add_source_file(filesystem_path)
     filesystem_path
   end
@@ -35,7 +40,6 @@ class Expander
     s = SourceFile.new(path)  
     @files[s.filesystem_path] = s
   end
-  
   
   def expand_list
     while true
@@ -79,7 +83,9 @@ class Expander
   end
   
   def concatenated
-    file_list.map {|f| @files[f[0]].lines.join}.join(";\n") #semi colon is to guard closures looking like functions.
+    file_list.map do |f| 
+      @files[f[0]].source
+    end.join(";\n") #semi colon is to guard closures looking like functions.
   end
   
 end
